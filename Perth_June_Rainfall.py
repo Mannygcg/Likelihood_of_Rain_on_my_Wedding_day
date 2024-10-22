@@ -64,7 +64,7 @@ def __():
 def __(mo):
     mo.md(
         r"""
-        The data to be used was collected from the Bureau of Meteorology (Australian Government).
+        The data to be used was collected from the Bureau of Meteorology (Australian Government), and the station from which the data was generated was Perth's airport.
 
         http://www.bom.gov.au/climate/data/index.shtml
         """
@@ -76,15 +76,21 @@ def __(mo):
 def __(__file__, os, pl):
     script_dir = os.path.dirname(os.path.abspath(__file__))
 
-    df_t = pl.read_csv(os.path.join(script_dir, "PA_MAX_TEMP.csv"))
-    df_r = pl.read_csv(os.path.join(script_dir, "PA_RAINFALL.csv"))
-    df_s = pl.read_csv(os.path.join(script_dir, "PA_SOLAR_EXPOSURE.csv"))
+    df_t = pl.read_csv(os.path.join(script_dir, "PA_MAX_TEMP.csv")) #Reading CSV file for Max temperature data
+    df_r = pl.read_csv(os.path.join(script_dir, "PA_RAINFALL.csv")) #Reading CSV file for Rainfall data
+    df_s = pl.read_csv(os.path.join(script_dir, "PA_SOLAR_EXPOSURE.csv")) #Reading CSV file for Solar exposure data
     return df_r, df_s, df_t, script_dir
 
 
 @app.cell
+def __(mo):
+    mo.md(r"""The data will be explore using .describe, this allows me to identify the type of data availablem null values and relevant data.""")
+    return
+
+
+@app.cell
 def __(df_t):
-    df_t.describe()
+    df_t.describe() 
     return
 
 
@@ -120,19 +126,22 @@ def __(df_r, df_s, df_t, pl):
         (pl.datetime(pl.col('Year'),pl.col('Month'),pl.col('Day'))).dt.strftime('%Y-%m-%d').str.to_date().alias('DATE')
     ).select(
         ['DATE','Daily global solar exposure (MJ/m*m)']
-    )
+    ) 
+    #This code allows to create a new column named 'Date' and only select the newly created date column and the solar exposure data.
 
     _df_r = df_r.with_columns(
         (pl.datetime(pl.col('Year'),pl.col('Month'),pl.col('Day'))).dt.strftime('%Y-%m-%d').str.to_date().alias('DATE')
     ).select(
         ['DATE','Rainfall amount (millimetres)']
     )
+    #The process is repeated but with the rainfall data.
 
     _df_t = df_t.with_columns(
         (pl.datetime(pl.col('Year'),pl.col('Month'),pl.col('Day'))).dt.strftime('%Y-%m-%d').str.to_date().alias('DATE')
     ).select(
         ['DATE','Maximum temperature (Degree C)']
     )
+    #The process is repeated but with the max temperature data.
 
     _df = _df_s.join(_df_r, on="DATE")
     df_temp = _df.join(_df_t, on='DATE').rename({
@@ -140,6 +149,7 @@ def __(df_r, df_s, df_t, pl):
         "Rainfall amount (millimetres)":"RAINFALL",
         "Maximum temperature (Degree C)":"MAX_TEMP"
     })
+    #We join the three datasets into a single dataframe (using the date) and renames the columns.
     df_temp
     return (df_temp,)
 
@@ -156,9 +166,11 @@ def __(mo):
         Additionally, we will be adding another columns to categorise the rain according to its intensity: 
 
         - 0: No rain
-        - 1: Light rain
-        - 2: Moderate rain
-        - 3: Heavy rain
+        - 1: Wet day
+        - 2: Heavy precipitation day
+        - 3: Very heavy precipitation day
+
+        http://www.bom.gov.au/climate/change/about/extremes.shtml
         """
     )
     return
@@ -167,19 +179,20 @@ def __(mo):
 @app.cell
 def __(df_temp, pl):
     _df = df_temp.with_columns(
-        (pl.col('RAINFALL').cast(pl.Float64).alias('RAINFALL')),
-        ((pl.col('MAX_TEMP').cast(pl.Float64).alias('MAX_TEMP'))),
-    ).fill_null(0).fill_nan(0)
+        (pl.col('RAINFALL').cast(pl.Float64).alias('RAINFALL')), #Changing the rainfall data to float
+        ((pl.col('MAX_TEMP').cast(pl.Float64).alias('MAX_TEMP'))), #Changing the maximum temperature data to float
+    ).fill_null(0).fill_nan(0) #Changing null and nan values for 0
+
 
     df = _df.with_columns(
-        pl.col('DATE').dt.year().alias('YEAR'),
-        pl.col('DATE').dt.day().alias('DAY'),
-        pl.col('DATE').dt.month().alias('MONTH'),
-        pl.when((pl.col("RAINFALL") < 1))
+        pl.col('DATE').dt.year().alias('YEAR'), #Create a new column from date to determine year.
+        pl.col('DATE').dt.day().alias('DAY'), #Create a new column from date to determine day.
+        pl.col('DATE').dt.month().alias('MONTH'), #Create a new column from date to determine month.
+        pl.when((pl.col("RAINFALL") < 1)) #Create a new column to categorise rain as mentioned above - using the BOM data http://www.bom.gov.au/climate/change/about/extremes.shtml
         .then(0)
-        .when((pl.col("RAINFALL") > 1) & (pl.col("RAINFALL") <= 10))
+        .when((pl.col("RAINFALL") >= 1) & (pl.col("RAINFALL") < 10))
         .then(1)
-        .when((pl.col("RAINFALL") > 10) & (pl.col("RAINFALL") <= 30))
+        .when((pl.col("RAINFALL") >= 10) & (pl.col("RAINFALL") < 30))
         .then(2)
         .otherwise(3)
         .alias("RAINFALL_CAT")
@@ -193,11 +206,13 @@ def __(df_temp, pl):
 def __(df, px):
     _df = df.select(
         ['DATE','RAINFALL','SOLAR_EXP','MAX_TEMP']
-    )
+    ) #Temporary dataframe that only columns: date, rainfall, solar exposure and maximum temperature.
+
     _fig = px.imshow(_df.corr(),
                     x=['Date', 'Solar Exposure', 'Rainfall', 'Maximum Temp'],
                     y=['Date', 'Solar Exposure', 'Rainfall', 'Maximum Temp']
                      ,color_continuous_scale='RdBu',range_color=[-1, 1],)
+    #Temporary correlation matrix to analyse the relationships between the variables.
     _fig.show()
     return
 
@@ -209,31 +224,44 @@ def __(mo):
 
 
 @app.cell
+def __(mo):
+    mo.md(
+        r"""
+        Month of June visualisations
+        -
+        """
+    )
+    return
+
+
+@app.cell
 def __(df, go, make_subplots, pl):
-    _df = df.filter(pl.col('MONTH')==6)
+    _df = df.filter(pl.col('MONTH')==6) #temporary dataframe with Jun filters
 
-    _fig = make_subplots(rows=2, cols=1)
+    _fig = make_subplots(rows=2, cols=1) #creating a figure with 2 rows and 1 columns
 
-    _dfm = _df.group_by("DAY").agg(pl.mean("RAINFALL_CAT").alias("Mean_Rainfall"))
+    _dfm = _df.group_by("DAY").agg(pl.mean("RAINFALL_CAT").alias("Mean_Rainfall")) #temporary dataframe to calculate the mean rainfall category by days of June
+
     _fig.add_trace(
-        go.Bar(x=_dfm['DAY'], y=_dfm['Mean_Rainfall'], name='Mean rain category'),
+        go.Bar(x=_dfm['DAY'], y=_dfm['Mean_Rainfall'], name='Mean rain category'), #Creating a bar chart with the mean rainfall category
         row=1, col=1
     )
 
-    _dfmx = _df.group_by("DAY").agg(pl.max("RAINFALL_CAT").alias("Max_Rainfall"))
+    _dfmx = _df.group_by("DAY").agg(pl.max("RAINFALL_CAT").alias("Max_Rainfall")) #temporary dataframe to calculate the max rainfall category by days of June
+
     _fig.add_trace(
-        go.Bar(x=_dfmx['DAY'], y=_dfmx['Max_Rainfall'], name='Max recorded rain category'),
+        go.Bar(x=_dfmx['DAY'], y=_dfmx['Max_Rainfall'], name='Max recorded rain category'), #Creating a bar chart with the max rainfall category
         row=2, col=1
     )
 
-    _fig.update_layout(
+    _fig.update_layout( #Additional customisations to the graph
         title="June's Rainfall Category Analysis",
         xaxis_title='Day',
         yaxis_title='Rainfall Category',
         barmode='overlay',
         annotations=[
             dict(
-                text="Rainfall Categories:<br>0: No rain<br>1: Light rain<br>2: Moderate rain<br>3: Heavy rain",
+                text="Rainfall Categories:<br>0: No rain<br>1: Wet day <br>2: Heavy precipitation <br>3: Very heavy precipitation",
                 xref="paper", yref="paper",
                 x=1.3, y=-0.01,
                 showarrow=False,
@@ -251,24 +279,38 @@ def __(df, go, make_subplots, pl):
 
 
 @app.cell
+def __(mo):
+    mo.md(
+        r"""
+        Historically, most of the days in June have had rain, with most of them having experienced very heavy precipitation at least once. 
+
+        However, on average, most of the days had a value lower than 1 (wet day), meaning that historically most of the time the days do not constantly experience rain or that most of the times it rains it is not heavy.
+        """
+    )
+    return
+
+
+@app.cell
 def __(df, go, make_subplots, pl):
-    _df = df.filter(pl.col('MONTH')==6)
+    _df = df.filter(pl.col('MONTH')==6) #temporary dataframe with Jun filters
 
     _fig = make_subplots(rows=2, cols=1)
 
-    _dfm = _df.group_by("DAY").agg(pl.mean("RAINFALL").alias("Mean_Rainfall"))
-    _fig.add_trace(
+    _dfm = _df.group_by("DAY").agg(pl.mean("RAINFALL").alias("Mean_Rainfall")) #temporary dataframe to calculate the mean rainfall by days of June
+
+    _fig.add_trace(   #Creating a bar chart with the mean rainfall category
         go.Bar(x=_dfm['DAY'], y=_dfm['Mean_Rainfall'], name='Mean Rainfall'),
         row=1, col=1
     )
 
-    _dfmx = _df.group_by("DAY").agg(pl.max("RAINFALL").alias("Max_Rainfall"))
-    _fig.add_trace(
+    _dfmx = _df.group_by("DAY").agg(pl.max("RAINFALL").alias("Max_Rainfall")) #temporary dataframe to calculate the max rainfall by days of June
+
+    _fig.add_trace(    #Creating a bar chart with the max rainfall category
         go.Bar(x=_dfmx['DAY'], y=_dfmx['Max_Rainfall'], name='Max Rainfall'),
         row=2, col=1
     )
 
-    _fig.update_layout(
+    _fig.update_layout( #Customisation of the charts
         title="June's Rainfall Analysis",
         xaxis_title='Day',
         yaxis_title='Rainfall (mm)',
@@ -281,39 +323,50 @@ def __(df, go, make_subplots, pl):
 
 
 @app.cell
+def __(mo):
+    mo.md(
+        r"""
+        Data exploration of June 14th (Wedding day)
+        -
+        """
+    )
+    return
+
+
+@app.cell
 def __(df, pl, px):
-    _df = df.with_columns(
-        pl.col('DATE').dt.year().alias('YEAR')
-        ,pl.col('DATE').dt.day().alias('DAY')
-        ,pl.col('DATE').dt.month().alias('MONTH')
-    ).filter(
+    #Temporary dataframe filtering the day 14 and month of June
+    _df = df.filter(
         (pl.col('DAY')==14) & (pl.col('MONTH')==6)
     )
-
+    #Bar chart of the temporary dataframe
     px.bar(_df,x='YEAR',y='RAINFALL')
     return
 
 
 @app.cell
 def __(df, go, make_subplots, pl):
+    #Temporary dataframe filtering the day 14 and month of June
     _df = df.filter(
         (pl.col('DAY')==14) & (pl.col('MONTH')==6)
     )
 
+    #Creating figure with spaces for two pltos
     _fig = make_subplots(rows=2, cols=1)
 
+    #Bar chart for distribution of 14th of Junes in rainfall category (%)
     _fig.add_trace(
         go.Histogram(x=_df['RAINFALL_CAT'], name='Rainfall Category (%)', histnorm='percent'),
         row=1, col=1
     )
 
-    # Add a bar chart for Rainfall Category
+    #Bar chart for distribution of 14th of Junes in rainfall category
     _fig.add_trace(
         go.Histogram(x=_df['RAINFALL_CAT'], name='Rainfall Category'),
         row=2, col=1
     )
 
-    # Update layout
+    # Customising layout
     _fig.update_layout(
         title='Historical distribution of June 14th Rainfall category',
         xaxis_title='Rainfall Category',
@@ -332,8 +385,6 @@ def __(df, go, make_subplots, pl):
             )
         ]
     )
-
-    # Show the plot
     _fig.show()
     return
 
@@ -345,30 +396,34 @@ def __(mo):
         Machine Learning  Algorithms
         -
         The dependable variable will be Rainfall whilst the independent variables will be date, day, temperature and solar exposure.
+
+        Ideally we would be using all of the algorithms to determine the likelihood of this day to rain. For temperature and solar exposure, we will be using the average value for the past 4 years.
+
+        The machine learning algorithms to be explores are linear regression, random forest and support vector regressor. These will be evaluated according to the coefficient of determination and the mean squared error.
         """
     )
     return
 
 
 @app.cell
-def __(df):
-    df
-    return
-
-
-@app.cell
 def __(df, pl, train_test_split):
+    #Temporary dataframe filtering the day 14 and month of June
     _df = df.filter(
         (pl.col('DAY')==14) & (pl.col('MONTH')==6)
     )
 
+    #dataframe with independent variables
     x = _df.select(
         ['SOLAR_EXP', 'MAX_TEMP', 'DAY','DATE']  
     )
+
+    #dataframe with dependent variables
     y = _df.select(['RAINFALL'])
 
+    #Train and test datasets for variables - the train sets are made with 80% of the data (Randomised) and the test sets with the remaining 20%
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.2, random_state=42)
 
+    #transform multidimensional dataframes into unidimensional ones.
     y_train = y_train.to_numpy().ravel()
     y_test = y_test.to_numpy().ravel()
     return x, x_test, x_train, y, y_test, y_train
@@ -419,6 +474,8 @@ def __(
     print('Random Forest') 
     print(f'Mean Squared Error: {mse_RF}') 
     print(f'R^2 Score: {r2_RF}') 
+
+    #Printing the weight of the features.
     importances = model_RF.feature_importances_ 
     for feature, importance in zip(x.columns, importances): 
         print(f'Feature: {feature}, Importance: {importance}') 
@@ -461,6 +518,11 @@ def __(
         y_pred_RF,
         y_pred_SVR,
     )
+
+
+@app.cell
+def __():
+    return
 
 
 @app.cell
@@ -521,7 +583,7 @@ def __(
     y_train,
 ):
     # Random Forest Regressor Model 
-    _model_RF = RandomForestRegressor(n_estimators=100, max_depth=10, min_samples_split = 2, min_samples_leaf=1) 
+    _model_RF = RandomForestRegressor(n_estimators=100, max_depth=10, min_samples_split = 10, min_samples_leaf=2) 
     _model_RF.fit(x_train, y_train) 
 
     # RFR predictions 
@@ -544,7 +606,7 @@ def __(
     print(f'Maximum Depth of Trees: {overall_max_depth}') 
 
     # SVR model 
-    _model_SVR = SVR(epsilon = 0.01, kernel = 'linear',)  
+    _model_SVR = SVR(epsilon = 0.01, kernel = 'linear', C=0.1)  
     _model_SVR.fit(x_train, y_train) 
 
     # SVR predictions 
