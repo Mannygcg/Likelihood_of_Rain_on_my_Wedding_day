@@ -1,4 +1,4 @@
-# The likelihood of rain on my Wedding day (Perth's Rainfall in June) - A project Just for Laughs and Data
+# The likelihood of rain on my Wedding day (Perth's Rainfall in June) - A short and sweet project Just for Laughs and Data
 
 The aim of this project is to:
 1. Try Marimo (A reactive notebook that uses pure python files)
