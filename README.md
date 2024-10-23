@@ -1,5 +1,4 @@
-# The likelihood of rain on my Wedding day (Perth's Rainfall in June) 
-## A project Just for Laughs and Data
+# The likelihood of rain on my Wedding day (Perth's Rainfall in June) - A project Just for Laughs and Data
 
 The aim of this project is to:
 1. Try Marimo (A reactive notebook that uses pure python files)
@@ -14,6 +13,7 @@ The data was extracted from the Australian Bureau of Meteorology, from Perth's a
 If you have any recommendations or tips to improve my coding or anything else - please let me know.
 
 Cheers,
+
 Manny
 
 
