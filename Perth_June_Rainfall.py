@@ -8,6 +8,9 @@ app = marimo.App(width="medium")
 def __(mo):
     mo.md(
         r"""
+        The likelihood of rain on my Wedding day (Perth's Rainfall in June) - A project Just for Laughs and Data
+        -
+
         I am currently organising my wedding for June, due to cheaper prices for vendors and venues (since winter is not a popular season for weddings). However, I would like to predict  how likely it is for there to be rain on my wedding day.
 
         On this project I will be using various types of ML algortihms from the SciKJit library including Random Forest, Linear Regression and Support Vector Regressor.
@@ -84,13 +87,13 @@ def __(__file__, os, pl):
 
 @app.cell
 def __(mo):
-    mo.md(r"""The data will be explore using .describe, this allows me to identify the type of data availablem null values and relevant data.""")
+    mo.md(r"""The data will be explore using .describe, this allows me to identify the type of data available, null values and relevant data.""")
     return
 
 
 @app.cell
 def __(df_t):
-    df_t.describe() 
+    df_t.describe()
     return
 
 
@@ -374,7 +377,7 @@ def __(df, go, make_subplots, pl):
         barmode='overlay',
         annotations=[
             dict(
-                text="Rainfall Categories:<br>0: No rain<br>1: Light rain<br>2: Moderate rain<br>3: Heavy rain",
+                text="Rainfall Categories:<br>0: No rain<br>1: Wet day <br>2: Heavy precipitation <br>3: Very heavy precipitation",
                 xref="paper", yref="paper",
                 x=1.2, y=-0.01,
                 showarrow=False,
@@ -521,7 +524,14 @@ def __(
 
 
 @app.cell
-def __():
+def __(mo):
+    mo.md(
+        r"""
+        The results of the ML algorithms are not promising, however these can be optimised by finding the adequate settings. 
+
+        Below we will be using the GridSearch function to determine what are the most optimal parameters to find the best results.
+        """
+    )
     return
 
 
@@ -565,6 +575,12 @@ def __(GridSearchCV, RandomForestRegressor, SVR, x_train, y_train):
     print("Best MSE:", -grid_search_rf.best_score_)  
     print("Best R²:", grid_search_rf.cv_results_['mean_test_R2'][grid_search_rf.best_index_])
     return grid_search, grid_search_rf, param_grid, param_grid_rf, rf, svr
+
+
+@app.cell
+def __(mo):
+    mo.md(r"""Now that the parameters have been proposed, we input these into the algorithms and reevaluate their performance.""")
+    return
 
 
 @app.cell
@@ -623,7 +639,30 @@ def __(
 
 
 @app.cell
-def __():
+def __(mo):
+    mo.md(
+        r"""
+        ML Results
+        -
+
+        Looking at the results for the ML algorithm (coefficient of determination and mean squared error) and the weight of the features it seems that these variables are not relevant factors to determine the likelihood of rain. This makes sense since rain is normally predicted by clouds, dew point and wind - this data however is locked behind a paywall from the BOM.
+        """
+    )
+    return
+
+
+@app.cell
+def __(mo):
+    mo.md(
+        r"""
+        Conclusion
+        -
+
+        Using just historical data, it seems that the 14th of June has around 57% chance  of having no rain, and 28% of becoming a 'wet day' which can be considered as just 'light rain'.
+
+        The use of ML was unsuccessful due to the amount and quality of data collected - this data was limited due to the BOM's paywall.
+        """
+    )
     return
 
 
